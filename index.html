@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>電子公告 | 株式会社〇〇</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>株式会社〇〇　電子公告</h1>
+      <p class="header-sub">Official Gazette</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="notice-section">
+      <h2>公告一覧</h2>
+      <p class="description">
+        当社は会社法第939条第1項の規定に基づき、電子公告により公告を行っています。<br>
+        以下のPDFファイルをクリックしてご確認ください。
+      </p>
+
+      <div id="loading" class="loading">読み込み中...</div>
+      <div id="error" class="error" style="display:none;">公告データの読み込みに失敗しました。</div>
+
+      <table id="gazette-table" style="display:none;">
+        <thead>
+          <tr>
+            <th>公告の種類</th>
+            <th>ファイル名</th>
+            <th>公開日</th>
+            <th>閲覧</th>
+          </tr>
+        </thead>
+        <tbody id="gazette-list">
+        </tbody>
+      </table>
+
+      <div id="empty" class="empty" style="display:none;">現在、公開中の公告はありません。</div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <p>&copy; 株式会社〇〇 All Rights Reserved.</p>
+      <p class="footer-note">
+        電子公告の掲載期間中はファイルを削除しません。<br>
+        お問い合わせ：info@yo-sya.com
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    async function loadGazette() {
+      const loading = document.getElementById('loading');
+      const error = document.getElementById('error');
+      const table = document.getElementById('gazette-table');
+      const tbody = document.getElementById('gazette-list');
+      const empty = document.getElementById('empty');
+
+      try {
+        const response = await fetch('pdfs/index.json');
+        if (!response.ok) throw new Error('fetch failed');
+        const data = await response.json();
+
+        loading.style.display = 'none';
+
+        if (!data || data.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        // 日付降順でソート（新しい順）
+        data.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        data.forEach((item, index) => {
+          const tr = document.createElement('tr');
+          if (index % 2 === 1) tr.classList.add('stripe');
+
+          const dateObj = new Date(item.date);
+          const dateStr = `${dateObj.getFullYear()}年${dateObj.getMonth() + 1}月${dateObj.getDate()}日`;
+
+          tr.innerHTML = `
+            <td>${escapeHtml(item.title)}</td>
+            <td class="filename">${escapeHtml(item.filename)}</td>
+            <td>${dateStr}</td>
+            <td><a href="pdfs/${encodeURIComponent(item.filename)}" target="_blank" rel="noopener" class="pdf-link">PDFを見る</a></td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        table.style.display = 'table';
+      } catch (e) {
+        loading.style.display = 'none';
+        error.style.display = 'block';
+      }
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    loadGazette();
+  </script>
+</body>
+</html>
