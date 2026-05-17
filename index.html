@@ -47,7 +47,8 @@
       try {
         const response = await fetch('pdfs/index.json');
         if (!response.ok) throw new Error('fetch failed');
-        const data = await response.json();
+        const json = await response.json();
+        const data = json.notices || json;
 
         loading.style.display = 'none';
 
